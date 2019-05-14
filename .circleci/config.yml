@@ -69,9 +69,7 @@ jobs:
     # This is based on your 1.0 configuration file or project settings
     - run: npm install bower -g
     - run: bundle install
-    - run: rake bower:clean
-    - run: rake bower:cache:clean
-    - run: rake bower:install
+    - run: bower install
     - run: sudo apt-get install netbase libpango-1.0-0 --fix-missing; true
     - run: curl -L -o google-chrome.deb https://s3-us-west-2.amazonaws.com/vloop-static/google-chrome-stable_59.0.3071.86-1_amd64.deb
     - run: sudo dpkg -i google-chrome.deb
@@ -97,34 +95,6 @@ jobs:
         - ~/.gradle
         - ~/.cache/bower
         - ./node_modules
-    # The following line was run implicitly in your 1.0 builds based on what CircleCI inferred about the structure of your project. In 2.0 you need to be explicit about which commands should be run. In some cases you can discard inferred commands if they are not relevant to your project.
-    - run: |-
-        mkdir -p config && echo 'test:
-          adapter: postgresql
-          encoding: unicode
-          pool: 5
-          database: circle_ruby_test
-          username: ubuntu
-          host: localhost
-        ' > config/database.yml
-    - run:
-        command: bundle exec rake db:create db:schema:load --trace
-        environment:
-          RAILS_ENV: test
-          RACK_ENV: test
-    # Test
-    #   This would typically be a build job when using workflows, possibly combined with build
-    # This is based on your 1.0 configuration file or project settings
-    - run: sudo apt-get update && sudo apt-get install --only-upgrade google-chrome-stable
-    # This is based on your 1.0 configuration file or project settings
-    - run: bundle exec rake spec:controllers
-    - run: bundle exec rake spec:models
-    - run: bundle exec rake spec:services
-    - run:
-        name: bundle exec rspec
-        # We may not be using as efficient a splitting method as was used on the 1.0 platform.
-        # For the most efficient split, see https://circleci.com/docs/2.0/parallelism-faster-jobs/ for setting this manually.
-        command: bundle exec rspec $(circleci tests glob "clojure.lang.LazySeq@a67bb5d1" | circleci tests split)
     # Teardown
     #   If you break your build into multiple jobs with workflows, you will probably want to do the parts of this that are relevant in each
     # Save test results
