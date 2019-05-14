@@ -1,93 +1,137 @@
-image_config: &image_config
-
-  # make sure to set your Docker Hub username & password in CircleCI,
-  # either as project-specific environment variables
-  # or as resources in your organization's org-global Context
-
-  IMAGE_NAME: # name your image (no spaces please!)
-
-  IMAGE_TAG: # give your image a tag (no spaces please!)
-
-  # NOTE: if you're modifying this config.yml file manually
-  # rather than using the included setup script,
-  # make sure you also add the values of your IMAGE_NAME & IMAGE_TAG variables
-  # to the `test_image` job (line 55)
-
-  LINUX_VERSION: # DEBIAN_JESSIE, DEBIAN_STRETCH, UBUNTU_TRUSTY, or UBUNTU_XENIAL
-
-  RUBY_VERSION_NUM: # pick a version from https://cache.ruby-lang.org/pub/ruby
-
-  NODE_VERSION_NUM: # pick a version from https://nodejs.org/dist
-
-  PYTHON_VERSION_NUM: # pick a version from https://python.org/ftp/python
-
-  JAVA: # Java options: true, false
-
-  MYSQL_CLIENT: # MySQL options: true, false
-
-  POSTGRES_CLIENT: # Postgres options: true, false
-
-  DOCKERIZE: # Dockerize options: true, false
-
-  BROWSERS: # browser tools (Xvfb, PhantomJS, Firefox, Chrome, Chromedriver): true, false
-
+# This configuration was automatically generated from a CircleCI 1.0 config.
+# It should include any build commands you had along with commands that CircleCI
+# inferred from your project structure. We strongly recommend you read all the
+# comments in this file to understand the structure of CircleCI 2.0, as the idiom
+# for configuration has changed substantially in 2.0 to allow arbitrary jobs rather
+# than the prescribed lifecycle of 1.0. In general, we recommend using this generated
+# configuration as a reference rather than using it in production, though in most
+# cases it should duplicate the execution of your original 1.0 config.
 version: 2
 jobs:
   build:
-    machine: true
+    working_directory: ~/soccer-data/webapp
+    parallelism: 1
+    shell: /bin/bash --login
+    # CircleCI 2.0 does not support environment variables that refer to each other the same way as 1.0 did.
+    # If any of these refer to each other, rewrite them so that they don't or see https://circleci.com/docs/2.0/env-vars/#interpolating-environment-variables-to-set-other-environment-variables .
     environment:
-      <<: *image_config
-
+      CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
+      CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
+    # In CircleCI 1.0 we used a pre-configured image with a large number of languages and other packages.
+    # In CircleCI 2.0 you can now specify your own image, or use one of our pre-configured images.
+    # The following configuration line tells CircleCI to use the specified docker image as the runtime environment for you job.
+    # We have selected a pre-built image that mirrors the build environment we use on
+    # the 1.0 platform, but we recommend you choose an image more tailored to the needs
+    # of each job. For more information on choosing an image (or alternatively using a
+    # VM instead of a container) see https://circleci.com/docs/2.0/executor-types/
+    # To see the list of pre-built images that CircleCI provides for most common languages see
+    # https://circleci.com/docs/2.0/circleci-images/
+    docker:
+    - image: circleci/build-image:ubuntu-14.04-XXL-upstart-1189-5614f37
+      command: /sbin/init
     steps:
-      - checkout
-
-##      - run: bash scripts/generate.sh > Dockerfile
-
-##      - run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-
-##      - run: docker build -t $DOCKER_USERNAME/$IMAGE_NAME:$IMAGE_TAG .
-
-##      - run: docker push $DOCKER_USERNAME/$IMAGE_NAME:$IMAGE_TAG && sleep 10
-
-##      - store_artifacts:
-##          path: Dockerfile
-
-##  test_image:
-##    docker:
-##      - image: $DOCKER_USERNAME/(name of image):(image tag)
-##        environment:
-##          <<: *image_config
-
-##    steps:
-##      - checkout
-
-##      - run:
-##          name: start Xvfb for phantomjs test
-##          command: Xvfb :99
-##          background: true
-
-##      - run:
-##          name: bats tests
-##          command: |
-##            mkdir -p test_results/bats
-##            bats scripts/tests.bats | \
-##            perl scripts/tap-to-junit.sh > \
-##            test_results/bats/results.xml
-
-##      - store_test_results:
-##          path: test_results
-
-##      - store_artifacts:
-##          path: test_results
-
-##workflows:
-##  version: 2
-##  dockerfile_wizard:
-##    jobs:
-##      - build:
-##          context: org-global
-
-##      - test_image:
-##          context: org-global
-##          requires:
-##            - build
+    # Machine Setup
+    #   If you break your build into multiple jobs with workflows, you will probably want to do the parts of this that are relevant in each
+    # The following `checkout` command checks out your code to your working directory. In 1.0 we did this implicitly. In 2.0 you can choose where in the course of a job your code should be checked out.
+    - checkout
+    # Prepare for artifact and test results  collection equivalent to how it was done on 1.0.
+    # In many cases you can simplify this from what is generated here.
+    # 'See docs on artifact collection here https://circleci.com/docs/2.0/artifacts/'
+    - run: mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
+    # This is based on your 1.0 configuration file or project settings
+    - run:
+        working_directory: ~/soccer-data/webapp
+        command: 'echo ''America/Los_Angeles'' | sudo tee -a /etc/timezone; sudo dpkg-reconfigure -f noninteractive tzdata; sudo service mysql restart; sudo service postgresql restart; '
+    - run:
+        working_directory: ~/soccer-data/webapp
+        command: nvm install 4.4.0 && nvm alias default 4.4.0
+    # Checkout
+    #   This would typically go in either a build or a build-and-test job when using workflows
+    # This is based on your 1.0 configuration file or project settings
+    # Dependencies
+    #   This would typically go in either a build or a build-and-test job when using workflows
+    # Restore the dependency cache
+    - restore_cache:
+        keys:
+        # This branch if available
+        - v1-dep-{{ .Branch }}-
+        # Default branch if not
+        - v1-dep-master-
+        # Any branch if there are none on the default branch - this should be unnecessary if you have your default branch configured correctly
+        - v1-dep-
+    # This is based on your 1.0 configuration file or project settings
+    - run: sudo apt-get update
+    - run: sudo apt-get install libicu52
+    - run: sudo apt-get install --only-upgrade lsb-base
+    - run: curl --output /home/ubuntu/bin/phantomjs-2.0.1-linux-x86_64-dynamic https://s3.amazonaws.com/circle-support-bucket/phantomjs/phantomjs-2.0.1-linux-x86_64-dynamic
+    - run: chmod a+x /home/ubuntu/bin/phantomjs-2.0.1-linux-x86_64-dynamic
+    - run: sudo ln -s --force /home/ubuntu/bin/phantomjs-2.0.1-linux-x86_64-dynamic /usr/local/bin/phantomjs
+    # This is based on your 1.0 configuration file or project settings
+    - run: npm install bower -g
+    - run: bundle install
+    - run: rake bower:clean
+    - run: rake bower:cache:clean
+    - run: rake bower:install
+    - run: sudo apt-get install netbase libpango-1.0-0 --fix-missing; true
+    - run: curl -L -o google-chrome.deb https://s3-us-west-2.amazonaws.com/vloop-static/google-chrome-stable_59.0.3071.86-1_amd64.deb
+    - run: sudo dpkg -i google-chrome.deb
+    - run: sudo sed -i 's|HERE/chrome\"|HERE/chrome\" --disable-setuid-sandbox|g' /opt/google/chrome/google-chrome
+    - run: rm google-chrome.deb
+    # This is based on your 1.0 configuration file or project settings
+    - run: sudo apt-get install -y x11vnc
+    - run:
+        command: x11vnc -forever -nopw
+        background: true
+    # Save dependency cache
+    - save_cache:
+        key: v1-dep-{{ .Branch }}-{{ epoch }}
+        paths:
+        # This is a broad list of cache paths to include many possible development environments
+        # You can probably delete some of these entries
+        - vendor/bundle
+        - ~/virtualenvs
+        - ~/.m2
+        - ~/.ivy2
+        - ~/.bundle
+        - ~/.go_workspace
+        - ~/.gradle
+        - ~/.cache/bower
+        - ./node_modules
+    # The following line was run implicitly in your 1.0 builds based on what CircleCI inferred about the structure of your project. In 2.0 you need to be explicit about which commands should be run. In some cases you can discard inferred commands if they are not relevant to your project.
+    - run: |-
+        mkdir -p config && echo 'test:
+          adapter: postgresql
+          encoding: unicode
+          pool: 5
+          database: circle_ruby_test
+          username: ubuntu
+          host: localhost
+        ' > config/database.yml
+    - run:
+        command: bundle exec rake db:create db:schema:load --trace
+        environment:
+          RAILS_ENV: test
+          RACK_ENV: test
+    # Test
+    #   This would typically be a build job when using workflows, possibly combined with build
+    # This is based on your 1.0 configuration file or project settings
+    - run: sudo apt-get update && sudo apt-get install --only-upgrade google-chrome-stable
+    # This is based on your 1.0 configuration file or project settings
+    - run: bundle exec rake spec:controllers
+    - run: bundle exec rake spec:models
+    - run: bundle exec rake spec:services
+    - run:
+        name: bundle exec rspec
+        # We may not be using as efficient a splitting method as was used on the 1.0 platform.
+        # For the most efficient split, see https://circleci.com/docs/2.0/parallelism-faster-jobs/ for setting this manually.
+        command: bundle exec rspec $(circleci tests glob "clojure.lang.LazySeq@a67bb5d1" | circleci tests split)
+    # Teardown
+    #   If you break your build into multiple jobs with workflows, you will probably want to do the parts of this that are relevant in each
+    # Save test results
+    - store_test_results:
+        path: /tmp/circleci-test-results
+    # Save artifacts
+    - store_artifacts:
+        path: /tmp/circleci-artifacts
+    - store_artifacts:
+        path: /tmp/circleci-test-results
